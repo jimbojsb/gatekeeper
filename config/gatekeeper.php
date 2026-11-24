@@ -66,8 +66,9 @@ return [
     | policies. This is a Gate rule, not a permission, so hasPermission()
     | still reports only what the registry maps the role to.
     |
-    | The role must be a case value of your role enum. The published Role
-    | stub includes a SuperAdmin case for it.
+    | The role is a case value of your role enum. The published Role stub
+    | includes a SuperAdmin case for it. If your enum has no such case, the
+    | bypass does nothing.
     |
     | Set super_admin_enabled to false to switch the bypass off without
     | touching stored roles. Users keep the role and get only what the

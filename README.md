@@ -104,7 +104,7 @@ return [
 ];
 ```
 
-The config is validated on boot. An invalid enum or registry class, or a `super_admin_role` that isn't a case of the role enum, throws. Console commands skip the check until the registry class exists, so `composer require` and `vendor:publish` work before the stubs are published.
+Nothing is validated at boot, so `composer` and `artisan` always run. Until the enums exist (for example, before the stubs are published), no abilities are registered and every check is denied.
 
 ### 4. Add the trait to your user model
 
@@ -189,7 +189,7 @@ To turn the bypass off, set `GATEKEEPER_SUPER_ADMIN=false` or the config value:
 'super_admin_enabled' => false,
 ```
 
-Stored roles are untouched. Users keep the role, which then behaves like any other, and turning the flag back on restores the bypass. If you don't want the role at all, also delete the `SuperAdmin` case from your role enum. `super_admin_role` is only checked while the bypass is enabled.
+Stored roles are untouched. Users keep the role, which then behaves like any other, and turning the flag back on restores the bypass. If you don't want the role at all, delete the `SuperAdmin` case from your role enum; the bypass does nothing while `super_admin_role` names a role the enum doesn't have.
 
 To use a different role as the super administrator, set `super_admin_role` to that role's value.
 

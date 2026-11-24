@@ -2,10 +2,8 @@
 
 namespace Jimbojsb\Gatekeeper;
 
-use BackedEnum;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
-use InvalidArgumentException;
 use Jimbojsb\Gatekeeper\Contracts\PermissionRegistry;
 
 class GatekeeperServiceProvider extends ServiceProvider
@@ -29,44 +27,23 @@ class GatekeeperServiceProvider extends ServiceProvider
             __DIR__.'/../stubs/Registry.php.stub' => app_path('Authorization/Registry.php'),
         ], ['gatekeeper', 'gatekeeper-stubs']);
 
-        if ($this->app->runningInConsole() && ! class_exists((string) config('gatekeeper.registry'))) {
-            return;
-        }
-
-        $this->validateConfig();
-
-        foreach (config('gatekeeper.permission_enum')::cases() as $permission) {
-            Gate::define(
-                (string) $permission->value,
-                fn ($user) => $user->hasPermission($permission),
-            );
-        }
-
-        Gate::before(fn ($user) => config('gatekeeper.super_admin_enabled')
-            && method_exists($user, 'hasRole')
-            && $user->hasRole(config('gatekeeper.super_admin_role')) ? true : null);
-    }
-
-    protected function validateConfig(): void
-    {
-        foreach (['role_enum', 'permission_enum'] as $key) {
-            if (! is_subclass_of((string) config("gatekeeper.$key"), BackedEnum::class)) {
-                throw new InvalidArgumentException("Gatekeeper: gatekeeper.$key must be a backed enum class.");
+        if (enum_exists((string) config('gatekeeper.permission_enum'))) {
+            foreach (config('gatekeeper.permission_enum')::cases() as $permission) {
+                Gate::define(
+                    (string) $permission->value,
+                    fn ($user) => $user->hasPermission($permission),
+                );
             }
         }
 
-        if (! is_subclass_of((string) config('gatekeeper.registry'), PermissionRegistry::class)) {
-            throw new InvalidArgumentException('Gatekeeper: gatekeeper.registry must implement '.PermissionRegistry::class.'.');
-        }
+        Gate::before(function ($user) {
+            if (! config('gatekeeper.super_admin_enabled') || ! method_exists($user, 'hasRole')) {
+                return null;
+            }
 
-        if (! is_string(config('gatekeeper.column')) || config('gatekeeper.column') === '') {
-            throw new InvalidArgumentException('Gatekeeper: gatekeeper.column must be a non-empty string.');
-        }
+            $role = config('gatekeeper.role_enum')::tryFrom((string) config('gatekeeper.super_admin_role'));
 
-        $superAdmin = config('gatekeeper.super_admin_role');
-
-        if (config('gatekeeper.super_admin_enabled') && (! is_string($superAdmin) || ! config('gatekeeper.role_enum')::tryFrom($superAdmin))) {
-            throw new InvalidArgumentException('Gatekeeper: gatekeeper.super_admin_role must be a case value of the role enum.');
-        }
+            return $role && $user->hasRole($role) ? true : null;
+        });
     }
 }

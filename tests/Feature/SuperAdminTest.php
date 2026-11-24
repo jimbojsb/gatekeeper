@@ -28,15 +28,20 @@ it('can be turned off', function () {
     expect(Gate::forUser(User::create(['roles' => [Role::SuperAdmin]]))->allows('launch-rockets'))->toBeFalse();
 });
 
-it('ignores the super admin role while disabled', function () {
-    config()->set('gatekeeper.super_admin_enabled', false);
+it('does nothing when the super admin role is not in the role enum', function () {
     config()->set('gatekeeper.super_admin_role', 'root');
+    Gate::define('launch-rockets', fn ($user) => false);
+
+    $editor = User::create(['roles' => [Role::Editor]]);
+
+    expect(Gate::forUser($editor)->allows('launch-rockets'))->toBeFalse()
+        ->and(Gate::forUser($editor)->allows('manage-posts'))->toBeTrue();
+});
+
+it('boots without the app enums published', function () {
+    config()->set('gatekeeper.role_enum', 'App\Authorization\Missing');
+    config()->set('gatekeeper.permission_enum', 'App\Authorization\Missing');
+    config()->set('gatekeeper.registry', 'App\Authorization\Missing');
 
     (new GatekeeperServiceProvider(app()))->boot();
 })->throwsNoExceptions();
-
-it('rejects a super admin role missing from the role enum', function () {
-    config()->set('gatekeeper.super_admin_role', 'root');
-
-    (new GatekeeperServiceProvider(app()))->boot();
-})->throws(InvalidArgumentException::class);
