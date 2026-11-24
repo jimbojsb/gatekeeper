@@ -2,8 +2,10 @@
 
 namespace Jimbojsb\Gatekeeper;
 
+use BackedEnum;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use InvalidArgumentException;
 use Jimbojsb\Gatekeeper\Contracts\PermissionRegistry;
 
 class GatekeeperServiceProvider extends ServiceProvider
@@ -31,13 +33,40 @@ class GatekeeperServiceProvider extends ServiceProvider
             return;
         }
 
-        Gatekeeper::validateConfig();
+        $this->validateConfig();
 
-        foreach (Gatekeeper::permissionEnum()::cases() as $permission) {
+        foreach (config('gatekeeper.permission_enum')::cases() as $permission) {
             Gate::define(
                 (string) $permission->value,
                 fn ($user) => $user->hasPermission($permission),
             );
+        }
+
+        Gate::before(fn ($user) => config('gatekeeper.super_admin_enabled')
+            && method_exists($user, 'hasRole')
+            && $user->hasRole(config('gatekeeper.super_admin_role')) ? true : null);
+    }
+
+    protected function validateConfig(): void
+    {
+        foreach (['role_enum', 'permission_enum'] as $key) {
+            if (! is_subclass_of((string) config("gatekeeper.$key"), BackedEnum::class)) {
+                throw new InvalidArgumentException("Gatekeeper: gatekeeper.$key must be a backed enum class.");
+            }
+        }
+
+        if (! is_subclass_of((string) config('gatekeeper.registry'), PermissionRegistry::class)) {
+            throw new InvalidArgumentException('Gatekeeper: gatekeeper.registry must implement '.PermissionRegistry::class.'.');
+        }
+
+        if (! is_string(config('gatekeeper.column')) || config('gatekeeper.column') === '') {
+            throw new InvalidArgumentException('Gatekeeper: gatekeeper.column must be a non-empty string.');
+        }
+
+        $superAdmin = config('gatekeeper.super_admin_role');
+
+        if (config('gatekeeper.super_admin_enabled') && (! is_string($superAdmin) || ! config('gatekeeper.role_enum')::tryFrom($superAdmin))) {
+            throw new InvalidArgumentException('Gatekeeper: gatekeeper.super_admin_role must be a case value of the role enum.');
         }
     }
 }

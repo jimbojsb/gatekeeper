@@ -11,9 +11,8 @@ use Jimbojsb\Gatekeeper\Contracts\PermissionRegistry;
 |--------------------------------------------------------------------------
 |
 | Maps each role to the permissions it grants. Add an arm to the match for
-| every case in Role. The match has no default arm on purpose: a role you
-| forget to map throws an UnhandledMatchError instead of silently granting
-| nothing or everything.
+| each role that grants something. Any role without an arm, including the
+| super administrator, falls through to the default and grants nothing.
 |
 | A role can include everything another role grants by spreading it:
 |
@@ -21,6 +20,11 @@ use Jimbojsb\Gatekeeper\Contracts\PermissionRegistry;
 |     Role::Editor => [...$this->grantedBy(Role::Writer), Permission::ManagePosts],
 |
 | Duplicates are fine; a user's permissions are deduplicated across roles.
+|
+| The super administrator role grants no permissions. Its bypass is a Gate
+| rule, not a permission: every Gate check (can(), @can, can: middleware,
+| policies) allows a super admin, while hasPermission() reports only what
+| this registry maps.
 |
 | This class is a singleton. Keep it stateless.
 |
@@ -32,6 +36,7 @@ class Registry implements PermissionRegistry
     {
         return match ($role) {
             Role::Admin => Permission::cases(),
+            default => [],
         };
     }
 }

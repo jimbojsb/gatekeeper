@@ -56,4 +56,27 @@ return [
 
     'column' => 'roles',
 
+    /*
+    |--------------------------------------------------------------------------
+    | Super Administrator Role
+    |--------------------------------------------------------------------------
+    |
+    | Users holding this role pass every Gate check: a Gate::before hook
+    | allows every ability, including your own Gate definitions and
+    | policies. This is a Gate rule, not a permission, so hasPermission()
+    | still reports only what the registry maps the role to.
+    |
+    | The role must be a case value of your role enum. The published Role
+    | stub includes a SuperAdmin case for it.
+    |
+    | Set super_admin_enabled to false to switch the bypass off without
+    | touching stored roles. Users keep the role and get only what the
+    | registry maps it to; switch it back on and the bypass returns.
+    |
+    */
+
+    'super_admin_role' => 'super-admin',
+
+    'super_admin_enabled' => env('GATEKEEPER_SUPER_ADMIN', true),
+
 ];

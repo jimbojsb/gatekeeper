@@ -13,6 +13,7 @@ class Registry implements PermissionRegistry
             Role::Writer => [Permission::WriteDrafts],
             Role::Editor => [...$this->grantedBy(Role::Writer), Permission::ManagePosts],
             Role::Admin => [...$this->grantedBy(Role::Editor), Permission::ManageUsers],
+            default => [],
         };
     }
 }

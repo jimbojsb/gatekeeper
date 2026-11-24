@@ -18,7 +18,7 @@ it('writes roles deduped and sorted', function () {
 
 it('rejects unknown roles on write', function () {
     User::create(['roles' => ['ghost']]);
-})->throws(InvalidArgumentException::class);
+})->throws(ValueError::class);
 
 it('treats null and empty as no roles', function () {
     expect(User::create(['roles' => null])->fresh()->roles)->toBeEmpty()

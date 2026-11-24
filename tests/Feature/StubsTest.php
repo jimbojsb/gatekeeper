@@ -3,7 +3,7 @@
 use App\Authorization\Permission;
 use App\Authorization\Registry;
 use App\Authorization\Role;
-use Jimbojsb\Gatekeeper\Gatekeeper;
+use Jimbojsb\Gatekeeper\GatekeeperServiceProvider;
 
 it('publishes stubs that satisfy the default config', function () {
     foreach (['Role', 'Permission', 'Registry'] as $stub) {
@@ -14,7 +14,7 @@ it('publishes stubs that satisfy the default config', function () {
     config()->set('gatekeeper.permission_enum', Permission::class);
     config()->set('gatekeeper.registry', Registry::class);
 
-    Gatekeeper::validateConfig();
+    (new GatekeeperServiceProvider(app()))->boot();
 
     expect((new Registry)->grantedBy(Role::Admin))->toBe(Permission::cases())
         ->and(require __DIR__.'/../../config/gatekeeper.php')->toMatchArray([

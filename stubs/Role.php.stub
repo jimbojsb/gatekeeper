@@ -16,9 +16,15 @@ namespace App\Authorization;
 | Keep this enum a plain list of identifiers with no methods. What each
 | role grants lives in Registry.php.
 |
+| SuperAdmin is the super administrator role named in
+| config/gatekeeper.php. Holders pass every Gate check while
+| super_admin_enabled is true. To drop the role entirely, disable it and
+| delete this case.
+|
 */
 
 enum Role: string
 {
+    case SuperAdmin = 'super-admin';
     case Admin = 'admin';
 }

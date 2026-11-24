@@ -45,6 +45,7 @@ namespace App\Authorization;
 
 enum Role: string
 {
+    case SuperAdmin = 'super-admin';
     case Admin = 'admin';
     case Editor = 'editor';
     case Writer = 'writer';
@@ -80,12 +81,13 @@ class Registry implements PermissionRegistry
             Role::Writer => [Permission::WriteDrafts],
             Role::Editor => [...$this->grantedBy(Role::Writer), Permission::ManagePosts],
             Role::Admin => [...$this->grantedBy(Role::Editor), Permission::ManageUsers],
+            default => [],
         };
     }
 }
 ```
 
-Because `match` is exhaustive, adding a role case without mapping it throws an `UnhandledMatchError`.
+Roles without an arm, including the super administrator, fall through to `default` and grant nothing.
 
 ### 3. Configure
 
@@ -97,10 +99,12 @@ return [
     'permission_enum' => App\Authorization\Permission::class,
     'registry' => App\Authorization\Registry::class,
     'column' => 'roles',
+    'super_admin_role' => 'super-admin',
+    'super_admin_enabled' => env('GATEKEEPER_SUPER_ADMIN', true),
 ];
 ```
 
-The config is validated on boot. An invalid enum or registry class throws. Console commands skip the check until the registry class exists, so `composer require` and `vendor:publish` work before the stubs are published.
+The config is validated on boot. An invalid enum or registry class, or a `super_admin_role` that isn't a case of the role enum, throws. Console commands skip the check until the registry class exists, so `composer require` and `vendor:publish` work before the stubs are published.
 
 ### 4. Add the trait to your user model
 
@@ -128,7 +132,7 @@ $user->update(['roles' => Role::Admin]);
 $user->roles = [];
 ```
 
-Writes are stored deduplicated and sorted. An unknown role throws `InvalidArgumentException`.
+Writes are stored deduplicated and sorted. An unknown role throws a `ValueError`, as do `hasRole()`, `hasPermission()` and `whereRole()` given an unknown string.
 
 ## Reading roles
 
@@ -150,7 +154,7 @@ $user->hasPermission('manage-posts');
 $user->permissions();
 ```
 
-`permissions()` returns the deduplicated union of every role's grants. It is cached on the model instance and recomputed when the roles column changes, so `$user->roles = [...]` takes effect immediately in the same request.
+`permissions()` returns the deduplicated union of every role's grants. It is computed on each call, so `$user->roles = [...]` takes effect immediately.
 
 ## Gate abilities
 
@@ -170,6 +174,24 @@ $user->can('manage-posts');
 ```php
 Route::get('/admin/users', ...)->middleware('can:manage-users');
 ```
+
+## Super administrator
+
+The bypass is on by default. Users holding the role named in `super_admin_role` (`super-admin` unless you change it) pass every Gate check: a `Gate::before` hook allows every ability, including your own `Gate::define` abilities and policy methods.
+
+The bypass is a Gate rule, not a permission. The registry maps the role to no permissions, so `permissions()` is empty and `hasPermission()` is false for a super admin. Check authorization with `can()`, `@can`, the `can:` middleware or a policy wherever a super admin should get through.
+
+The hook only ever allows. For everyone else it returns `null`, so normal checks run. User models without the `HasRoles` trait are ignored by it.
+
+To turn the bypass off, set `GATEKEEPER_SUPER_ADMIN=false` or the config value:
+
+```php
+'super_admin_enabled' => false,
+```
+
+Stored roles are untouched. Users keep the role, which then behaves like any other, and turning the flag back on restores the bypass. If you don't want the role at all, also delete the `SuperAdmin` case from your role enum. `super_admin_role` is only checked while the bypass is enabled.
+
+To use a different role as the super administrator, set `super_admin_role` to that role's value.
 
 ## Querying by role
 
