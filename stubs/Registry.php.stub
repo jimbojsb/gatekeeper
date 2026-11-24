@@ -1,0 +1,37 @@
+<?php
+
+namespace App\Authorization;
+
+use BackedEnum;
+use Jimbojsb\Gatekeeper\Contracts\PermissionRegistry;
+
+/*
+|--------------------------------------------------------------------------
+| Permission Registry
+|--------------------------------------------------------------------------
+|
+| Maps each role to the permissions it grants. Add an arm to the match for
+| every case in Role. The match has no default arm on purpose: a role you
+| forget to map throws an UnhandledMatchError instead of silently granting
+| nothing or everything.
+|
+| A role can include everything another role grants by spreading it:
+|
+|     Role::Writer => [Permission::WriteDrafts],
+|     Role::Editor => [...$this->grantedBy(Role::Writer), Permission::ManagePosts],
+|
+| Duplicates are fine; a user's permissions are deduplicated across roles.
+|
+| This class is a singleton. Keep it stateless.
+|
+*/
+
+class Registry implements PermissionRegistry
+{
+    public function grantedBy(BackedEnum $role): array
+    {
+        return match ($role) {
+            Role::Admin => Permission::cases(),
+        };
+    }
+}

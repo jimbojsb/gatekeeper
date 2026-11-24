@@ -1,0 +1,24 @@
+<?php
+
+namespace App\Authorization;
+
+/*
+|--------------------------------------------------------------------------
+| Roles
+|--------------------------------------------------------------------------
+|
+| Every role a user can hold. Add a case per role.
+|
+| The case value is what gets stored in the user's roles column, so pick
+| short, stable, lowercase strings. Renaming a value orphans every user
+| who holds it; treat that like a data migration.
+|
+| Keep this enum a plain list of identifiers with no methods. What each
+| role grants lives in Registry.php.
+|
+*/
+
+enum Role: string
+{
+    case Admin = 'admin';
+}

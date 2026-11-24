@@ -1,0 +1,23 @@
+<?php
+
+namespace App\Authorization;
+
+/*
+|--------------------------------------------------------------------------
+| Permissions
+|--------------------------------------------------------------------------
+|
+| Every permission your application checks. Add a case per permission.
+|
+| Each case becomes a Gate ability named after its value, usable with
+| Gate::allows('manage-users'), @can('manage-users') and the
+| can:manage-users middleware. Kebab-case values read best there.
+|
+| Permissions are not stored anywhere, so renaming one is a code change only.
+|
+*/
+
+enum Permission: string
+{
+    case ManageUsers = 'manage-users';
+}

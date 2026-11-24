@@ -1,0 +1,39 @@
+{
+    "name": "jimbojsb/gatekeeper",
+    "description": "Code-defined roles and permissions for Laravel, stored as a JSON column on the user model.",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": "^8.3",
+        "laravel/framework": "^12.0|^13.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^10.0|^11.0",
+        "pestphp/pest": "^4.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Jimbojsb\\Gatekeeper\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Jimbojsb\\Gatekeeper\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Jimbojsb\\Gatekeeper\\GatekeeperServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
